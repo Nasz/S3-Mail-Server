@@ -1,0 +1,25 @@
+#!/bin/sh
+
+echo "${PWD##*/}: started."
+
+# WORKAROUND:
+#   postfix has to be aware of the DNS servers
+#   without this workaround it uses 127.0.0.1:53 for some unknown (yet) reason...
+[ -d /var/spool/postfix/etc ] || mkdir -v /var/spool/postfix/etc
+
+diff -q /var/spool/postfix/etc/resolv.conf /etc/resolv.conf 2>/dev/null
+[ $? -eq 0 ] || cp -v /etc/resolv.conf /var/spool/postfix/etc/resolv.conf
+
+# run postfix consistency check and exit if failed
+set -e
+postfix check 2>&1
+
+# run Postfix
+set -x
+exec /usr/libexec/postfix/master 2>&1
+# alpine <3.9
+#exec /usr/lib/postfix/master 2>&1
+
+# Do not use 'postfix start-fg' command since it does not handle the signals,
+# e.g. if you do 'sv restart postfix', postfix/master will NOT receive the
+# SIGTERM signal.

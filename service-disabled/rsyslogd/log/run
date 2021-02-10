@@ -1,0 +1,3 @@
+#!/bin/sh
+touch /var/log/maillog
+exec tail -f /var/log/maillog 2>&1

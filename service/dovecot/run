@@ -1,0 +1,25 @@
+#!/bin/sh
+exec 2>&1
+
+echo "${PWD##*/}: started."
+
+set -x
+chown -Rh dovecot:dovecot -- /etc/dovecot
+
+# For lmtp user 'vmail' so the dovecot has an access to drop the emails on FS.
+VMAIL_USER=${VMAIL_USER:-vmail}
+VMAIL_ID=${VMAIL_ID:-2700}
+VMAIL_HOME=${VMAIL_HOME:-/vmail}
+adduser -u ${VMAIL_ID} -D -s /bin/false -h ${VMAIL_HOME} ${VMAIL_USER}
+# groupadd -g ${VMAIL_ID} ${VMAIL_USER}
+# useradd -u ${VMAIL_ID} -g ${VMAIL_USER} -r -m -d ${VMAIL_HOME} -s /bin/false ${VMAIL_USER}
+chown -Rh vmail:vmail -- ${VMAIL_HOME}
+
+# Stolen PID race condition.
+# In some cases the new process can take the same PID that is in /run/dovecot/master.pid
+# this will make Dovecot think that it is already running, which is not true:
+# ``Fatal: Dovecot is already running with PID 9 (read from /run/dovecot/master.pid)``
+# So remove the leftover before we start the dovecot:
+rm -vf /run/dovecot/master.pid
+
+exec /usr/sbin/dovecot -F

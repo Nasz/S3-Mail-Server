@@ -1,0 +1,35 @@
+FROM debian:stretch
+MAINTAINER Andrey Arapov <andrey.arapov@nixaid.com>
+
+# To avoid problems with Dialog and curses wizards
+ENV DEBIAN_FRONTEND noninteractive
+
+# Workaround the apt-get slowness when running grsecurity kernel
+# ulimit -n 1024
+RUN apt-get update && \
+    apt-get -y install opendkim runit curl make gcc
+
+# Compile socklog
+ENV SOCKLOG_NAME "socklog-2.1.0"
+ENV SOCKLOG_HASH "aa869a787ee004da4e5509b5a0031bcc17a4ab4ac650c2ce8d4e488123acb455"
+
+RUN cd /opt && \
+    curl -#L -o $SOCKLOG_NAME.tar.gz http://smarden.org/socklog/$SOCKLOG_NAME.tar.gz && \
+    sha256sum $SOCKLOG_NAME.tar.gz |grep -qw $SOCKLOG_HASH && \
+    tar xf $SOCKLOG_NAME.tar.gz && \
+    rm -f $SOCKLOG_NAME.tar.gz && \
+    cd admin/$SOCKLOG_NAME && \
+    package/install && \
+    package/install-man
+
+RUN rm -vf /etc/service/socklog-klog /etc/service/socklog-unix
+
+#RUN useradd -r -m -d /var/run/opendkim -s /bin/false opendkim
+
+# tzdata - so that TZ environment variable gets processed
+# rsyslog - to log postfix service into /var/log/mail.log file
+
+COPY service /etc/service/
+RUN find /etc/service -xdev -type f -name "run" -exec chmod +x '{}' \;
+
+ENTRYPOINT runsvdir -P /etc/service

@@ -1,0 +1,6 @@
+#!/bin/sh
+
+echo "${PWD##*/}: started."
+
+touch /var/log/maillog
+exec /usr/sbin/rsyslogd -n 2>&1

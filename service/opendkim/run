@@ -1,0 +1,8 @@
+#!/bin/sh
+echo "${PWD##*/}: started."
+
+set -x
+mkdir /var/run/opendkim
+chown -Rh opendkim:opendkim -- /etc/opendkim /var/run/opendkim
+#exec su -s /bin/sh opendkim -c "/usr/sbin/opendkim -f -x /etc/opendkim/opendkim.conf -u opendkim -P /var/run/opendkim/opendkim.pid" 2>&1
+exec /usr/sbin/opendkim -f -x /etc/opendkim/opendkim.conf -u opendkim -P /var/run/opendkim/opendkim.pid 2>&1
