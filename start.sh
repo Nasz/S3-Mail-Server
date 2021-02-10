@@ -1,6 +1,6 @@
 #!/bin/bash
 
-IMAGE=postfix
+IMAGE=s3mail
 
 docker build -t $IMAGE .
 docker rm -f $IMAGE
